@@ -1,0 +1,56 @@
+# Licensed to the LF AI & Data foundation under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+localStorage:
+  path: /var/lib/milvus/data/ # please adjust in embedded Milvus: /tmp/milvus/data/
+
+# Related configuration of MinIO/S3/GCS or any other service supports S3 API, which is responsible for data persistence for Milvus.
+# We refer to the storage service as MinIO/S3 in the following description for simplicity.
+minio:
+  address: localhost # Address of MinIO/S3
+  port: 9000 # Port of MinIO/S3
+  accessKeyID: minioadmin # accessKeyID of MinIO/S3
+  secretAccessKey: minioadmin # MinIO/S3 encryption string
+  useSSL: false # Access to MinIO/S3 with SSL
+  ssl:
+    tlsCACert: /path/to/public.crt # path to your CACert file, ignore when it is empty
+  bucketName: a-bucket # Bucket name in MinIO/S3
+  rootPath: files # The root path where the message is stored in MinIO/S3
+  # Whether to useIAM role to access S3/GCS instead of access/secret keys
+  # For more information, refer to
+  # aws: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html
+  # gcp: https://cloud.google.com/storage/docs/access-control/iam
+  # aliyun (ack): https://www.alibabacloud.com/help/en/container-service-for-kubernetes/latest/use-rrsa-to-enforce-access-control
+  # aliyun (ecs): https://www.alibabacloud.com/help/en/elastic-compute-service/latest/attach-an-instance-ram-role
+  useIAM: false
+  # Cloud Provider of S3. Supports: "aws", "gcp", "aliyun".
+  # You can use "aws" for other cloud provider supports S3 API with signature v4, e.g.: minio
+  # You can use "gcp" for other cloud provider supports S3 API with signature v2
+  # You can use "aliyun" for other cloud provider uses virtual host style bucket
+  # When useIAM enabled, only "aws", "gcp", "aliyun" is supported for now
+  cloudProvider: aws
+  # Custom endpoint for fetch IAM role credentials. when useIAM is true & cloudProvider is "aws".
+  # Leave it empty if you want to use AWS default endpoint
+  iamEndpoint:
+  # Log level for aws sdk log.
+  # Supported level:  off, fatal, error, warn, info, debug, trace
+  logLevel: fatal
+  # Cloud data center region
+  region: ""
+  # Cloud whether use virtual host bucket mode
+  useVirtualHost: false
+  # timeout for request time in milliseconds
+  requestTimeoutMs: 10000
