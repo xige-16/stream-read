@@ -19,9 +19,7 @@ require (
 	google.golang.org/grpc v1.57.1 // indirect
 )
 
-require (
-	github.com/xige-16/stream-read/pkg v0.0.0-00010101000000-000000000000
-)
+require github.com/xige-16/stream-read/pkg v0.0.0-00010101000000-000000000000
 
 require (
 	cloud.google.com/go/compute v1.19.1 // indirect
@@ -32,6 +30,7 @@ require (
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -70,6 +69,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/goleak v1.2.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect

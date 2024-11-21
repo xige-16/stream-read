@@ -18,6 +18,7 @@ package msgstream
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"strings"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/xige-16/stream-read/pkg/log"
+	"github.com/xige-16/stream-read/pkg/metrics"
 	"github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper"
 	kafkawrapper "github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper/kafka"
 	pulsarmqwrapper "github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper/pulsar"
@@ -48,6 +50,7 @@ type PmsFactory struct {
 	PulsarTenant     string
 	PulsarNameSpace  string
 	RequestTimeout   time.Duration
+	metricRegisterer prometheus.Registerer
 }
 
 func NewPmsFactory(serviceParam *paramtable.ServiceParam) *PmsFactory {
@@ -62,6 +65,11 @@ func NewPmsFactory(serviceParam *paramtable.ServiceParam) *PmsFactory {
 		PulsarTenant:     config.Tenant.GetValue(),
 		PulsarNameSpace:  config.Namespace.GetValue(),
 		RequestTimeout:   config.RequestTimeout.GetAsDuration(time.Second),
+	}
+
+	if config.EnableClientMetrics.GetAsBool() {
+		// Enable client metrics if config.EnableClientMetrics is true, use pkg-defined registerer.
+		f.metricRegisterer = metrics.GetRegisterer()
 	}
 
 	return f
@@ -83,9 +91,10 @@ func (f *PmsFactory) NewMsgStream(ctx context.Context) (MsgStream, error) {
 		return nil, err
 	}
 	clientOpts := pulsar.ClientOptions{
-		URL:              f.PulsarAddress,
-		Authentication:   auth,
-		OperationTimeout: timeout,
+		URL:               f.PulsarAddress,
+		Authentication:    auth,
+		OperationTimeout:  timeout,
+		MetricsRegisterer: f.metricRegisterer,
 	}
 
 	pulsarClient, err := pulsarmqwrapper.NewClient(f.PulsarTenant, f.PulsarNameSpace, clientOpts)
@@ -109,9 +118,10 @@ func (f *PmsFactory) NewTtMsgStream(ctx context.Context) (MsgStream, error) {
 		return nil, err
 	}
 	clientOpts := pulsar.ClientOptions{
-		URL:              f.PulsarAddress,
-		Authentication:   auth,
-		OperationTimeout: timeout,
+		URL:               f.PulsarAddress,
+		Authentication:    auth,
+		OperationTimeout:  timeout,
+		MetricsRegisterer: f.metricRegisterer,
 	}
 
 	pulsarClient, err := pulsarmqwrapper.NewClient(f.PulsarTenant, f.PulsarNameSpace, clientOpts)
