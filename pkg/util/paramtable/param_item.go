@@ -18,8 +18,8 @@ import (
 
 	"go.uber.org/atomic"
 
-	"github.com/xige-16/storage-test/pkg/config"
-	"github.com/xige-16/storage-test/pkg/util/funcutil"
+	"github.com/xige-16/stream-read/pkg/config"
+	"github.com/xige-16/stream-read/pkg/util/funcutil"
 )
 
 type ParamItem struct {
@@ -139,6 +139,10 @@ func (pi *ParamItem) GetAsDuration(unit time.Duration) time.Duration {
 
 func (pi *ParamItem) GetAsJSONMap() map[string]string {
 	return getAndConvert(pi.GetValue(), funcutil.JSONToMap, nil)
+}
+
+func (pi *ParamItem) GetAsRoleDetails() map[string](map[string]([](map[string]string))) {
+	return getAndConvert(pi.GetValue(), funcutil.JSONToRoleDetails, nil)
 }
 
 type CompositeParamItem struct {

@@ -28,8 +28,8 @@ import (
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/commonpb"
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
-	"github.com/xige-16/storage-test/pkg/common"
-	"github.com/xige-16/storage-test/pkg/log"
+	"github.com/xige-16/stream-read/pkg/common"
+	"github.com/xige-16/stream-read/pkg/log"
 )
 
 func TestSchema(t *testing.T) {

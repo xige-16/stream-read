@@ -25,8 +25,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
-	"github.com/xige-16/storage-test/pkg/common"
-	"github.com/xige-16/storage-test/pkg/log"
+	"github.com/xige-16/stream-read/pkg/common"
+	"github.com/xige-16/stream-read/pkg/log"
 )
 
 // Generic Clone for proto message

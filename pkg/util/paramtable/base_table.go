@@ -22,22 +22,36 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
-	config "github.com/xige-16/storage-test/pkg/config"
-	"github.com/xige-16/storage-test/pkg/log"
-	"github.com/xige-16/storage-test/pkg/util/typeutil"
+	config "github.com/xige-16/stream-read/pkg/config"
+	"github.com/xige-16/stream-read/pkg/log"
+	"github.com/xige-16/stream-read/pkg/util/etcd"
+	"github.com/xige-16/stream-read/pkg/util/typeutil"
 )
 
 // UniqueID is type alias of typeutil.UniqueID
 type UniqueID = typeutil.UniqueID
 
 const (
-	DefaultMinioUseIAM        = "false"
-	DefaultMinioCloudProvider = "aws"
-	DefaultMinioIAMEndpoint   = ""
+	DefaultGlogConf             = "glog.conf"
+	DefaultMinioHost            = "localhost"
+	DefaultMinioPort            = "9000"
+	DefaultMinioAccessKey       = "minioadmin"
+	DefaultMinioSecretAccessKey = "minioadmin"
+	DefaultMinioUseSSL          = "false"
+	DefaultMinioBucketName      = "a-bucket"
+	DefaultMinioUseIAM          = "false"
+	DefaultMinioCloudProvider   = "aws"
+	DefaultMinioIAMEndpoint     = ""
+	DefaultEtcdEndpoints        = "localhost:2379"
 
-	DefaultMinioRegion         = ""
-	DefaultMinioUseVirtualHost = "false"
-	DefaultMinioRequestTimeout = "10000"
+	DefaultLogFormat                         = "text"
+	DefaultLogLevelForBase                   = "debug"
+	DefaultRootPath                          = ""
+	DefaultMinioLogLevel                     = "fatal"
+	DefaultKnowhereThreadPoolNumRatioInBuild = 1
+	DefaultMinioRegion                       = ""
+	DefaultMinioUseVirtualHost               = "false"
+	DefaultMinioRequestTimeout               = "10000"
 )
 
 // Const of Global Config List
@@ -130,6 +144,9 @@ func (bt *BaseTable) init() {
 		}
 	}
 	bt.initConfigsFromLocal()
+	if !bt.config.skipRemote {
+		bt.initConfigsFromRemote()
+	}
 }
 
 func (bt *BaseTable) initConfigsFromLocal() {
@@ -144,6 +161,39 @@ func (bt *BaseTable) initConfigsFromLocal() {
 		log.Warn("init baseTable with file failed", zap.Strings("configFile", bt.config.yamlFiles), zap.Error(err))
 		return
 	}
+}
+
+func (bt *BaseTable) initConfigsFromRemote() {
+	refreshInterval := bt.config.refreshInterval
+	etcdConfig := EtcdConfig{}
+	etcdConfig.Init(bt)
+	etcdConfig.Endpoints.PanicIfEmpty = false
+	etcdConfig.RootPath.PanicIfEmpty = false
+	if etcdConfig.Endpoints.GetValue() == "" {
+		return
+	}
+	if etcdConfig.UseEmbedEtcd.GetAsBool() && !etcd.HasServer() {
+		return
+	}
+	info := &config.EtcdInfo{
+		UseEmbed:        etcdConfig.UseEmbedEtcd.GetAsBool(),
+		UseSSL:          etcdConfig.EtcdUseSSL.GetAsBool(),
+		Endpoints:       etcdConfig.Endpoints.GetAsStrings(),
+		CertFile:        etcdConfig.EtcdTLSCert.GetValue(),
+		KeyFile:         etcdConfig.EtcdTLSKey.GetValue(),
+		CaCertFile:      etcdConfig.EtcdTLSCACert.GetValue(),
+		MinVersion:      etcdConfig.EtcdTLSMinVersion.GetValue(),
+		KeyPrefix:       etcdConfig.RootPath.GetValue(),
+		RefreshInterval: time.Duration(refreshInterval) * time.Second,
+	}
+
+	s, err := config.NewEtcdSource(info)
+	if err != nil {
+		log.Info("init with etcd failed", zap.Error(err))
+		return
+	}
+	bt.mgr.AddSource(s)
+	s.SetEventHandler(bt.mgr)
 }
 
 // GetConfigDir returns the config directory

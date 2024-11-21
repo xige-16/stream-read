@@ -18,7 +18,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/xige-16/storage-test/pkg/config"
+	"github.com/xige-16/stream-read/pkg/config"
 )
 
 var baseParams = NewBaseTable(SkipRemote(true))

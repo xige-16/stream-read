@@ -27,7 +27,7 @@ import (
 	"github.com/spaolacci/murmur3"
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
-	"github.com/xige-16/storage-test/pkg/common"
+	"github.com/xige-16/stream-read/pkg/common"
 )
 
 const substringLengthForCRC = 100

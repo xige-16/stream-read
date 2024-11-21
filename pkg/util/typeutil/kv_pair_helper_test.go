@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/commonpb"
-	"github.com/xige-16/storage-test/pkg/common"
+	"github.com/xige-16/stream-read/pkg/common"
 )
 
 func TestNewKvPairs(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
-	"github.com/xige-16/storage-test/pkg/common"
+	"github.com/xige-16/stream-read/pkg/common"
 )
 
 // GetDim get dimension of field. Maybe also helpful outside.

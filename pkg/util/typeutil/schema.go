@@ -27,8 +27,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
-	"github.com/xige-16/storage-test/pkg/common"
-	"github.com/xige-16/storage-test/pkg/log"
+	"github.com/xige-16/stream-read/pkg/common"
+	"github.com/xige-16/stream-read/pkg/log"
 )
 
 const DynamicFieldMaxLength = 512
@@ -853,7 +853,7 @@ func MergeFieldData(dst []*schemapb.FieldData, src []*schemapb.FieldData) error 
 
 // GetVectorFieldSchema get vector field schema from collection schema.
 func GetVectorFieldSchema(schema *schemapb.CollectionSchema) (*schemapb.FieldSchema, error) {
-	for _, fieldSchema := range schema.Fields {
+	for _, fieldSchema := range schema.GetFields() {
 		if IsVectorType(fieldSchema.DataType) {
 			return fieldSchema, nil
 		}
@@ -863,7 +863,7 @@ func GetVectorFieldSchema(schema *schemapb.CollectionSchema) (*schemapb.FieldSch
 
 // GetPrimaryFieldSchema get primary field schema from collection schema
 func GetPrimaryFieldSchema(schema *schemapb.CollectionSchema) (*schemapb.FieldSchema, error) {
-	for _, fieldSchema := range schema.Fields {
+	for _, fieldSchema := range schema.GetFields() {
 		if fieldSchema.IsPrimaryKey {
 			return fieldSchema, nil
 		}
@@ -874,7 +874,7 @@ func GetPrimaryFieldSchema(schema *schemapb.CollectionSchema) (*schemapb.FieldSc
 
 // GetPartitionKeyFieldSchema get partition field schema from collection schema
 func GetPartitionKeyFieldSchema(schema *schemapb.CollectionSchema) (*schemapb.FieldSchema, error) {
-	for _, fieldSchema := range schema.Fields {
+	for _, fieldSchema := range schema.GetFields() {
 		if fieldSchema.IsPartitionKey {
 			return fieldSchema, nil
 		}

@@ -3,8 +3,8 @@ package paramtable
 import (
 	"go.uber.org/zap"
 
-	"github.com/xige-16/storage-test/pkg/config"
-	"github.com/xige-16/storage-test/pkg/log"
+	"github.com/xige-16/stream-read/pkg/config"
+	"github.com/xige-16/stream-read/pkg/log"
 )
 
 const hookYamlFile = "hook.yaml"
