@@ -56,16 +56,11 @@ type ServiceParam struct {
 }
 
 func (p *ServiceParam) init(bt *BaseTable) {
-	p.LocalStorageCfg.Init(bt)
-	p.MetaStoreCfg.Init(bt)
-	p.EtcdCfg.Init(bt)
-	p.TiKVCfg.Init(bt)
 	p.MQCfg.Init(bt)
 	p.PulsarCfg.Init(bt)
 	p.KafkaCfg.Init(bt)
 	p.RocksmqCfg.Init(bt)
 	p.NatsmqCfg.Init(bt)
-	p.MinioCfg.Init(bt)
 }
 
 func (p *ServiceParam) RocksmqEnable() bool {
@@ -475,7 +470,7 @@ Valid values: [default, pulsar, kafka, rocksmq, natsmq]`,
 	p.PursuitBufferSize = ParamItem{
 		Key:          "mq.pursuitBufferSize",
 		Version:      "2.3.0",
-		DefaultValue: "8388608", // 8 MB
+		DefaultValue: "8", // 8 MB
 		Doc:          `pursuit mode buffer size in bytes`,
 		Export:       true,
 	}

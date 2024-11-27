@@ -144,9 +144,9 @@ func (bt *BaseTable) init() {
 		}
 	}
 	bt.initConfigsFromLocal()
-	if !bt.config.skipRemote {
-		bt.initConfigsFromRemote()
-	}
+	//if !bt.config.skipRemote {
+	//	bt.initConfigsFromRemote()
+	//}
 }
 
 func (bt *BaseTable) initConfigsFromLocal() {

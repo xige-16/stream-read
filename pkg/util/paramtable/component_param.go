@@ -25,7 +25,6 @@ import (
 	"github.com/milvus-io/milvus-proto/go-api/v2/commonpb"
 	"github.com/xige-16/stream-read/pkg/config"
 	"github.com/xige-16/stream-read/pkg/log"
-	"github.com/xige-16/stream-read/pkg/util/hardware"
 	"github.com/xige-16/stream-read/pkg/util/metricsinfo"
 )
 
@@ -1969,18 +1968,8 @@ func (p *queryNodeConfig) init(base *BaseTable) {
 		Key:          "queryNode.segcore.knowhereThreadPoolNumRatio",
 		Version:      "2.0.0",
 		DefaultValue: "4",
-		Formatter: func(v string) string {
-			factor := getAsInt64(v)
-			if factor <= 0 || !p.EnableDisk.GetAsBool() {
-				factor = 1
-			} else if factor > 32 {
-				factor = 32
-			}
-			knowhereThreadPoolSize := uint32(hardware.GetCPUNum()) * uint32(factor)
-			return strconv.FormatUint(uint64(knowhereThreadPoolSize), 10)
-		},
-		Doc:    "The number of threads in knowhere's thread pool. If disk is enabled, the pool size will multiply with knowhereThreadPoolNumRatio([1, 32]).",
-		Export: true,
+		Doc:          "The number of threads in knowhere's thread pool. If disk is enabled, the pool size will multiply with knowhereThreadPoolNumRatio([1, 32]).",
+		Export:       true,
 	}
 	p.KnowhereThreadPoolSize.Init(base.mgr)
 
@@ -2152,17 +2141,6 @@ for a specific duration post-load, albeit accompanied by a concurrent increase i
 		Key:          "queryNode.scheduler.maxReadConcurrentRatio",
 		Version:      "2.0.0",
 		DefaultValue: "1.0",
-		Formatter: func(v string) string {
-			ratio := getAsFloat(v)
-			cpuNum := int64(hardware.GetCPUNum())
-			concurrency := int64(float64(cpuNum) * ratio)
-			if concurrency < 1 {
-				return "1" // MaxReadConcurrency must >= 1
-			} else if concurrency > cpuNum*100 {
-				return strconv.FormatInt(cpuNum*100, 10) // MaxReadConcurrency must <= 100*cpuNum
-			}
-			return strconv.FormatInt(concurrency, 10)
-		},
 		Doc: `maxReadConcurrentRatio is the concurrency ratio of read task (search task and query task).
 Max read concurrency would be the value of ` + "hardware.GetCPUNum * maxReadConcurrentRatio" + `.
 It defaults to 2.0, which means max read concurrency would be the value of hardware.GetCPUNum * 2.

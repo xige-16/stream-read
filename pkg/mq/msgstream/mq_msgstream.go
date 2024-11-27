@@ -33,9 +33,9 @@ import (
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/commonpb"
 	"github.com/milvus-io/milvus-proto/go-api/v2/msgpb"
-	"github.com/xige-16/stream-read/mq/msgstream/mqwrapper"
 	"github.com/xige-16/stream-read/pkg/config"
 	"github.com/xige-16/stream-read/pkg/log"
+	"github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper"
 	"github.com/xige-16/stream-read/pkg/util/merr"
 	"github.com/xige-16/stream-read/pkg/util/paramtable"
 	"github.com/xige-16/stream-read/pkg/util/retry"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
+	"github.com/xige-16/stream-read/pkg/util/funcutil"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -23,23 +24,29 @@ import (
 func main() {
 	dbName := flag.String("db_name", "", "database name")
 	collectionName := flag.String("collection_name", "", "collection name")
+	collectionID := flag.Int64("collection_id", 0, "collection id")
 	topic := flag.String("topic_name", "", "topic name")
 	pos := flag.String("sub_pos", "", "sub pos")
 	subName := flag.String("sub_name", "recovery-milvus", "sub name")
-	endTimeStamp := flag.Int64("end_timestamp", 0, "end timestamp")
 
 	milvusAddress := flag.String("milvus_address", "", "milvus address")
 	milvusUser := flag.String("milvus_user", "", "milvus user")
 	milvusPass := flag.String("milvus_password", "", "milvus password")
 
+	autoIDFieldName := flag.String("auto_id_field_name", "", "auto id field name")
+
 	// 解析命令行参数
 	flag.Parse()
 	log.Info("parse args done", zap.String("dbName", *dbName),
 		zap.String("collectionName", *collectionName),
+		zap.Int64("collectionID", *collectionID),
 		zap.String("topic", *topic),
 		zap.String("pos", *pos),
 		zap.String("subName", *subName),
-		zap.Int64("endTimeStamp", *endTimeStamp))
+		zap.String("milvus address", *milvusAddress),
+		zap.String("milvus user", *milvusUser),
+		zap.String("milvus pass", *milvusPass),
+		zap.String("auto id field name", *autoIDFieldName))
 
 	startTime := time.Now().Unix()
 
@@ -52,11 +59,16 @@ func main() {
 	if err != nil {
 		panic("unmarshal position failed!, " + err.Error())
 	}
+	pChan := funcutil.ToPhysicalChannel(position.ChannelName)
+	if pChan != *topic {
+		panic("topic not consistent with pos, expect = " + *topic + ", actual = " + pChan)
+	}
+	position.ChannelName = pChan
 
 	ctx := context.Background()
 	paramtable.Init()
 	Params := paramtable.Get()
-	factory := msgstream.NewPmsFactory(Params)
+	factory := msgstream.NewPmsFactory(&Params.ServiceParam)
 	stream, err := factory.NewTtMsgStream(ctx)
 	if err != nil {
 		panic("init msg stream failed!, " + err.Error())
@@ -72,11 +84,13 @@ func main() {
 		panic("asConsumer failed!, " + err.Error())
 	}
 
+	log.Info("start seek", zap.Any("pos", position))
 	err = stream.Seek(ctx, []*msgpb.MsgPosition{position})
 	if err != nil {
 		stream.Close()
 		panic("seek failed!, " + err.Error())
 	}
+	log.Info("seek done!")
 
 	client, err := client.NewClient(ctx, client.Config{
 		Address:  *milvusAddress,
@@ -89,12 +103,16 @@ func main() {
 	}
 	defer client.Close()
 
+	log.Info("init milvus client done!")
 	for {
 		select {
 		case <-ctx.Done():
 			stream.Close()
 			return
-		case msgs := <-stream.Chan():
+		case msgs, ok := <-stream.Chan():
+			if !ok {
+				return
+			}
 			timeOfBegin, _ := tsoutil.ParseTS(msgs.BeginTs)
 			log.Info("update recover process", zap.Int64("start time", startTime), zap.Int64("msg time", timeOfBegin.Unix()))
 			if timeOfBegin.Unix() >= startTime {
@@ -105,29 +123,32 @@ func main() {
 				switch msg.Type() {
 				case commonpb.MsgType_Insert:
 					imsg := msg.(*msgstream.InsertMsg)
-					imsgDbName := imsg.GetDbName()
 					imsgColname := imsg.GetCollectionName()
+					imsgCollID := imsg.GetCollectionID()
 					imsgPartName := imsg.GetPartitionName()
 					imsgFieldDatas := imsg.GetFieldsData()
 					numRows := imsg.GetNumRows()
 
-					if *dbName != imsgDbName || *collectionName != imsgColname {
+					if *collectionID != imsgCollID || *collectionName != imsgColname {
 						continue
 					}
 
-					log.Debug("receive insert messages",
-						zap.String("db", imsgDbName),
+					log.Info("receive insert messages",
 						zap.String("coll", imsgColname),
 						zap.String("part", imsgPartName),
 						zap.Uint64("numRows", numRows))
 
-					columes := make([]entity.Column, len(imsgFieldDatas))
+					columes := make([]entity.Column, 0)
 					var convertErr error
-					for offset, fd := range imsgFieldDatas {
-						columes[offset], err = entity.FieldDataColumn(fd, 0, int(numRows))
-						if err != nil {
-							convertErr = err
-							break
+					for _, fd := range imsgFieldDatas {
+						if len(*autoIDFieldName) != 0 && *autoIDFieldName != fd.GetFieldName() {
+							colume, err := entity.FieldDataColumn(fd, 0, int(numRows))
+
+							if err != nil {
+								convertErr = err
+								break
+							}
+							columes = append(columes, colume)
 						}
 					}
 					if convertErr != nil {
@@ -142,17 +163,17 @@ func main() {
 
 				case commonpb.MsgType_Delete:
 					dmsg := msg.(*msgstream.DeleteMsg)
-					dmsgDbName := dmsg.GetDbName()
 					dmsgColname := dmsg.GetCollectionName()
+					dmsgColID := dmsg.GetCollectionID()
 					dmsgPartName := dmsg.GetPartitionName()
 					dmsgIDs := dmsg.GetPrimaryKeys()
 					numRows := dmsg.GetNumRows()
 
-					if *dbName != dmsgDbName || *collectionName != dmsgColname {
+					if *collectionID != dmsgColID || *collectionName != dmsgColname {
 						continue
 					}
 
-					log.Debug("receive delete messages", zap.Int64("numRows", dmsg.NumRows))
+					log.Info("receive delete messages", zap.Int64("numRows", dmsg.NumRows))
 
 					colume, err := entity.IDColumns(dmsgIDs, 0, int(numRows))
 					if err != nil {
@@ -163,6 +184,12 @@ func main() {
 					err = client.DeleteByPks(ctx, dmsgColname, dmsgPartName, colume)
 					if err != nil {
 						log.Error("delete msg failed", zap.Error(err))
+					}
+				case commonpb.MsgType_DropCollection:
+					dropmsg := msg.(*msgstream.DropCollectionMsg)
+					if *collectionID == dropmsg.GetCollectionID() {
+						log.Info("collection droped, recovery done!")
+						return
 					}
 				}
 			}

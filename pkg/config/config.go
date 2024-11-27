@@ -43,13 +43,13 @@ func Init(opts ...Option) (*Manager, error) {
 	if o.EnvKeyFormatter != nil {
 		sourceManager.AddSource(NewEnvSource(o.EnvKeyFormatter))
 	}
-	if o.EtcdInfo != nil {
-		s, err := NewEtcdSource(o.EtcdInfo)
-		if err != nil {
-			return nil, err
-		}
-		sourceManager.AddSource(s)
-	}
+	//if o.EtcdInfo != nil {
+	//	s, err := NewEtcdSource(o.EtcdInfo)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	sourceManager.AddSource(s)
+	//}
 	return sourceManager, nil
 }
 

@@ -30,8 +30,6 @@ import (
 
 	"github.com/xige-16/stream-read/pkg/log"
 	"github.com/xige-16/stream-read/pkg/metrics"
-	"github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper"
-	kafkawrapper "github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper/kafka"
 	pulsarmqwrapper "github.com/xige-16/stream-read/pkg/mq/msgstream/mqwrapper/pulsar"
 	"github.com/xige-16/stream-read/pkg/util/paramtable"
 	"github.com/xige-16/stream-read/pkg/util/retry"
@@ -174,49 +172,4 @@ func (f *PmsFactory) NewMsgStreamDisposer(ctx context.Context) func([]string, st
 		}
 		return nil
 	}
-}
-
-type KmsFactory struct {
-	dispatcherFactory ProtoUDFactory
-	config            *paramtable.KafkaConfig
-	ReceiveBufSize    int64
-	MQBufSize         int64
-}
-
-func (f *KmsFactory) NewMsgStream(ctx context.Context) (MsgStream, error) {
-	kafkaClient, err := kafkawrapper.NewKafkaClientInstanceWithConfig(ctx, f.config)
-	if err != nil {
-		return nil, err
-	}
-	return NewMqMsgStream(ctx, f.ReceiveBufSize, f.MQBufSize, kafkaClient, f.dispatcherFactory.NewUnmarshalDispatcher())
-}
-
-func (f *KmsFactory) NewTtMsgStream(ctx context.Context) (MsgStream, error) {
-	kafkaClient, err := kafkawrapper.NewKafkaClientInstanceWithConfig(ctx, f.config)
-	if err != nil {
-		return nil, err
-	}
-	return NewMqTtMsgStream(ctx, f.ReceiveBufSize, f.MQBufSize, kafkaClient, f.dispatcherFactory.NewUnmarshalDispatcher())
-}
-
-func (f *KmsFactory) NewMsgStreamDisposer(ctx context.Context) func([]string, string) error {
-	return func(channels []string, subname string) error {
-		msgstream, err := f.NewMsgStream(ctx)
-		if err != nil {
-			return err
-		}
-		msgstream.AsConsumer(ctx, channels, subname, mqwrapper.SubscriptionPositionUnknown)
-		msgstream.Close()
-		return nil
-	}
-}
-
-func NewKmsFactory(config *paramtable.ServiceParam) Factory {
-	f := &KmsFactory{
-		dispatcherFactory: ProtoUDFactory{},
-		ReceiveBufSize:    config.MQCfg.ReceiveBufSize.GetAsInt64(),
-		MQBufSize:         config.MQCfg.MQBufSize.GetAsInt64(),
-		config:            &config.KafkaCfg,
-	}
-	return f
 }

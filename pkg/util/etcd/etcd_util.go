@@ -20,7 +20,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net/url"
 	"os"
 	"time"
 
@@ -180,33 +179,6 @@ func buildKvGroup(keys, values []string) (map[string]string, error) {
 		ret[k] = values[i]
 	}
 	return ret, nil
-}
-
-// StartTestEmbedEtcdServer returns a newly created embed etcd server.
-// ### USED FOR UNIT TEST ONLY ###
-func StartTestEmbedEtcdServer() (*embed.Etcd, string, error) {
-	dir, err := os.MkdirTemp(os.TempDir(), "milvus_ut")
-	if err != nil {
-		return nil, "", err
-	}
-	config := embed.NewConfig()
-
-	config.Dir = dir
-	config.LogLevel = "warn"
-	config.LogOutputs = []string{"default"}
-	u, err := url.Parse("http://localhost:0")
-	if err != nil {
-		return nil, "", err
-	}
-	config.LCUrls = []url.URL{*u}
-	u, err = url.Parse("http://localhost:0")
-	if err != nil {
-		return nil, "", err
-	}
-	config.LPUrls = []url.URL{*u}
-
-	server, err := embed.StartEtcd(config)
-	return server, dir, err
 }
 
 // GetEmbedEtcdEndpoints returns etcd listener address for endpoint config.

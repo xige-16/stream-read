@@ -3,7 +3,7 @@ PWD 	  := $(shell pwd)
 GOPATH	:= $(shell $(GO) env GOPATH)
 ROOTPATH := $(abspath $(dir $(PWD)))
 SHELL 	:= /bin/bash
-OBJPREFIX := "github.com/milvus-io/milvus/cmd/milvus"
+OBJPREFIX := "github.com/xige-16/stream-read/cmd/milvus"
 
 INSTALL_PATH := $(ROOTPATH)/bin
 
